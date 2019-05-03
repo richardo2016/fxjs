@@ -14,13 +14,8 @@
 
 #include "add.h"
 #include <assert.h>
-#include "common.h"
 
 void print_usage(void)
 {
-	fprintf(stderr, "usage: add [options] [--] file-spec [file-spec] [...]\n\n");
-	fprintf(stderr, "\t-n, --dry-run    dry run\n");
-	fprintf(stderr, "\t-v, --verbose    be verbose\n");
-	fprintf(stderr, "\t-u, --update     update tracked files\n");
-	exit(1);
+    exit(1);
 }

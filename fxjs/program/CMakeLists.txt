@@ -17,8 +17,9 @@ add_executable(fxjs ${src_list})
 
 set(PROJECT_ROOT_DIR ${PROJECT_SOURCE_DIR}/../..)
 set(ARCH_DIRNAME ${OS}_${ARCH}_${BUILD_TYPE})
+set(FIBJS_ARCH_DIRNAME ${OS}_${ARCH}_release)
 set(BIN_DIR ${PROJECT_ROOT_DIR}/bin/${ARCH_DIRNAME})
-set(FIBJS_DIR ${PROJECT_ROOT_DIR}/fibjs/bin/${ARCH_DIRNAME})
+set(FIBJS_DIR ${PROJECT_ROOT_DIR}/fibjs/bin/${FIBJS_ARCH_DIRNAME})
 set(EXECUTABLE_OUTPUT_PATH ${BIN_DIR})
 
 include(CheckIncludeFiles)

@@ -123,6 +123,7 @@ OUT_PATH=${OUT_PATH}/${ARCH_DIRNAME}
 if [ ! -e ${OUT_PATH} ]; then
 	mkdir ${OUT_PATH}
 fi
+# [fibjs]Compile project based on fibjs :end
 
 # [fxjs:libs]Compile lib of fxjs :start
 OUT_LIB_PATH=${OUT_PATH}/lib
@@ -167,8 +168,6 @@ if [ $? != 0 ]; then
 	exit 1
 fi
 # [fxjs:main]Compile main fxjs :end
-
-# [fibjs]Compile project based on fibjs :end
 
 if [ "${BUILD_TYPE}" = "release" ]; then
 	cd "${BIN_PATH}"

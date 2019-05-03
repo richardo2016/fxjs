@@ -16,7 +16,6 @@ file(GLOB_RECURSE src_list "src/*.c*")
 add_library(fxjs ${src_list})
 
 set(PROJECT_ROOT_DIR ${PROJECT_SOURCE_DIR}/..)
-# message("${PROJECT_ROOT_DIR}")
 set(ARCH_DIRNAME ${OS}_${ARCH}_${BUILD_TYPE})
 set(BIN_DIR ${PROJECT_ROOT_DIR}/bin/${ARCH_DIRNAME})
 set(LIBRARY_OUTPUT_PATH ${BIN_DIR})

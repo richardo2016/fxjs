@@ -5,3 +5,5 @@
 *.sdf
 *.suo
 node_modules
+
+.vscode

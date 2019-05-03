@@ -7,11 +7,8 @@
 
 #include "fibjs.h"
 #include "object.h"
-#include "git2.h"
-
-extern "C" {
 #include "add.h"
-}
+
 namespace fibjs {
 
 void importModule()
@@ -60,17 +57,18 @@ void importModule()
     IMPORT_MODULE(zlib);
     IMPORT_MODULE(zmq);
 
-    // #ifdef _WIN32
-    //     IMPORT_MODULE(gui);
-    //     IMPORT_MODULE(registry);
-    // #endif
+#ifdef _WIN32
+    IMPORT_MODULE(gui);
+    IMPORT_MODULE(registry);
+#endif
 }
 
 void main(int32_t argc, char** argv)
 {
     importModule();
 
-    start(argc, argv, main_fiber);
+    v8::Platform* (*get_platform)() = NULL;
+    start(argc, argv, main_fiber, get_platform);
     run_gui();
 }
 }
@@ -108,8 +106,7 @@ int CALLBACK WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLi
 
 int32_t main(int32_t argc, char* argv[])
 {
-    // fibjs::main(argc, argv);
-    test_git_add(argc, argv);
+    fibjs::main(argc, argv);
     return 0;
 }
 #endif
