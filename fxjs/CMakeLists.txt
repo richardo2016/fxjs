@@ -4,7 +4,7 @@ include(tools/arch.cmake)
 include(tools/os.cmake)
 include(tools/subdirs.cmake)
 
-project(fibgit)
+project(fxjs)
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
@@ -13,7 +13,7 @@ if(CCACHE_FOUND)
 endif(CCACHE_FOUND)
 
 file(GLOB_RECURSE src_list "src/*.c*")
-add_library(fibgit ${src_list})
+add_library(fxjs ${src_list})
 
 set(PROJECT_ROOT_DIR ${PROJECT_SOURCE_DIR}/..)
 # message("${PROJECT_ROOT_DIR}")
@@ -75,8 +75,7 @@ set(CMAKE_C_FLAGS "${flags}")
 set(CMAKE_CXX_FLAGS "${flags} ${ccflags}")
 
 include_directories(
-	"${PROJECT_ROOT_DIR}/fibgit/include"
-	"${PROJECT_ROOT_DIR}/libgit2/include"
+	"${PROJECT_ROOT_DIR}/fxjs/include"
 	"${PROJECT_ROOT_DIR}/fibjs/fibjs/include"
 	"${PROJECT_ROOT_DIR}/fibjs/vender"
 	"${PROJECT_ROOT_DIR}/fibjs/vender/v8"

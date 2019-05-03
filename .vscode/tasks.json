@@ -5,7 +5,7 @@
             "label": "build",
             "command": "sh",
             "args": [
-                "fibgit_build",
+                "fxjs_build",
                 "-j"
             ],
             "group": {

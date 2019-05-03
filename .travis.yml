@@ -72,4 +72,4 @@ deploy:
     overwrite: true
     on:
       tags: true
-      repo: richardo2016/fibgit
+      repo: richardo2016/fxjs

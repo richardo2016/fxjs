@@ -4,7 +4,7 @@ include(../tools/arch.cmake)
 include(../tools/os.cmake)
 include(../tools/subdirs.cmake)
 
-project(fibgit)
+project(fxjs)
 
 find_program(CCACHE_FOUND ccache)
 if(CCACHE_FOUND)
@@ -13,13 +13,12 @@ if(CCACHE_FOUND)
 endif(CCACHE_FOUND)
 
 file(GLOB_RECURSE src_list "src/*.c*")
-add_executable(fibgit ${src_list})
+add_executable(fxjs ${src_list})
 
 set(PROJECT_ROOT_DIR ${PROJECT_SOURCE_DIR}/../..)
 set(ARCH_DIRNAME ${OS}_${ARCH}_${BUILD_TYPE})
 set(BIN_DIR ${PROJECT_ROOT_DIR}/bin/${ARCH_DIRNAME})
 set(FIBJS_DIR ${PROJECT_ROOT_DIR}/fibjs/bin/${ARCH_DIRNAME})
-set(LIBGIT2_DIR ${PROJECT_ROOT_DIR}/libgit2/${LIBGIT2_BUILD_PATH})
 set(EXECUTABLE_OUTPUT_PATH ${BIN_DIR})
 
 include(CheckIncludeFiles)
@@ -43,16 +42,16 @@ set(link_flags "-lcurl ")
 if(${OS} STREQUAL "Darwin")
 	set(link_flags "${link_flags} -mmacosx-version-min=10.9 -framework Carbon -framework IOKit -framework Security")
 	set(flags "${flags} -mmacosx-version-min=10.9")
-	target_link_libraries(fibgit dl iconv stdc++)
+	target_link_libraries(fxjs dl iconv stdc++)
 endif()
 
 if(${OS} STREQUAL "Linux")
-	target_link_libraries(fibgit dl rt)
+	target_link_libraries(fxjs dl rt)
 endif()
 
 if(${OS} STREQUAL "FreeBSD")
 	find_library(execinfo execinfo "/usr/local/lib" "/usr/lib")
-	target_link_libraries(fibgit ${execinfo})
+	target_link_libraries(fxjs ${execinfo})
 endif()
 
 if(${BUILD_TYPE} STREQUAL "release")
@@ -86,7 +85,7 @@ set(CMAKE_C_FLAGS "${flags}")
 set(CMAKE_CXX_FLAGS "${flags} ${ccflags}")
 
 include_directories(
-	"${PROJECT_ROOT_DIR}/fibgit/include"
+	"${PROJECT_ROOT_DIR}/fxjs/include"
 	"${PROJECT_ROOT_DIR}/libgit2/include"
 	"${PROJECT_ROOT_DIR}/fibjs/fibjs/include"
 	"${PROJECT_ROOT_DIR}/fibjs/vender"
@@ -100,13 +99,11 @@ include_directories(
 set(libs fibjs expat gumbo gd tiff jpeg png webp zlib leveldb snappy ev pcre sqlite mongo umysql uuid exif mbedtls v8 zmq unzip editline exlib)
 
 foreach(lib ${libs})
-	target_link_libraries(fibgit "${FIBJS_DIR}/lib${lib}.a")
+	target_link_libraries(fxjs "${FIBJS_DIR}/lib${lib}.a")
 endforeach()
 
-target_link_libraries(fibgit "${LIBGIT2_DIR}/${LIBGIT2_OUTPUTNAME}.a")
+target_link_libraries(fxjs "${BIN_DIR}/libfxjs.a")
 
-target_link_libraries(fibgit "${BIN_DIR}/libfibgit.a")
+target_link_libraries(fxjs pthread)
 
-target_link_libraries(fibgit pthread)
-
-set_target_properties(fibgit PROPERTIES LINK_FLAGS ${link_flags})
+set_target_properties(fxjs PROPERTIES LINK_FLAGS ${link_flags})

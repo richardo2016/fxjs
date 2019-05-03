@@ -1,5 +1,5 @@
 /*
- * fibgit.cpp
+ * fxjs.cpp
  *
  *  Created on: Jun 1, 2018
  *      Author: lion
@@ -9,8 +9,8 @@
 #include "object.h"
 #include "git2.h"
 
-extern "C"{
-    #include "add.h"
+extern "C" {
+#include "add.h"
 }
 namespace fibjs {
 

@@ -87,8 +87,8 @@ if [ "$ENABLE_JOBS" = "1" -a "$BUILD_JOBS" = "" ]; then
 fi
 
 ROOT_PATH=`pwd`
-FIBGIT_LIB_CMAKELIST_PATH=${ROOT_PATH}/fibgit
-FIBGIT_MAIN_CMAKELIST_PATH=${ROOT_PATH}/fibgit/program
+FXJS_LIB_CMAKELIST_PATH=${ROOT_PATH}/fxjs
+FXJS_MAIN_CMAKELIST_PATH=${ROOT_PATH}/fxjs/program
 OUT_PATH=${ROOT_PATH}/out
 BIN_ROOT=${ROOT_PATH}/bin
 ARCH_DIRNAME=${TARGET_OS}_${TARGET_ARCH}_${BUILD_TYPE}
@@ -105,31 +105,6 @@ if [ ${BUILD_TYPE} = 'clean' ]; then
 
 	exit 0
 fi
-
-# [libgit2]Compile statically :start
-cd ${ROOT_PATH}/libgit2
-
-LIBGIT2_BUILD_TYPE="Release" # always use Release version libgit2 firstly
-LIBGIT2_BUILD_PATH=build/${ARCH_DIRNAME}
-LIBGIT2_OUTPUTNAME=libgit2
-# default for mac osx
-LIBGIT2_OPENSSL_ROOT_DIR=/usr/local/opt/openssl
-LIBGIT2_OPENSSL_LIBRARIES=/usr/local/opt/openssl/lib
-if [ $TARGET_OS = "Linux" ]; then
-	LIBGIT2_OPENSSL_ROOT_DIR=/usr/local/ssl
-	LIBGIT2_OPENSSL_LIBRARIES=/usr/local/ssl/lib
-fi
-
-CMAKE_VARS_2_FIBGIT_COMPILATION="-DLIBGIT2_OUTPUTNAME=${LIBGIT2_OUTPUTNAME} -DLIBGIT2_BUILD_PATH=${LIBGIT2_BUILD_PATH}"
-
-mkdir -p $LIBGIT2_BUILD_PATH && cd $LIBGIT2_BUILD_PATH
-cmake -DBUILD_SHARED_LIBS:BOOL=OFF -DCMAKE_BUILD_TYPE=${LIBGIT2_BUILD_TYPE} -DOPENSSL_ROOT_DIR=${LIBGIT2_OPENSSL_ROOT_DIR} -DOPENSSL_LIBRARIES=${LIBGIT2_OPENSSL_LIBRARIES} ../../
-cmake --build .
-# [libgit2]run unit-test
-if [ ! "$FIBGIT_RUN_LIBGIT2_TEST" = "" ]; then
-	./${LIBGIT2_OUTPUTNAME}_clar
-fi
-# [libgit2]Compile statically :end
 
 # [fibjs]Compile project based on fibjs :start
 cd ${ROOT_PATH}/fibjs
@@ -149,14 +124,14 @@ if [ ! -e ${OUT_PATH} ]; then
 	mkdir ${OUT_PATH}
 fi
 
-# [fibgit:libs]Compile lib of fibgit :start
+# [fxjs:libs]Compile lib of fxjs :start
 OUT_LIB_PATH=${OUT_PATH}/lib
 if [ ! -e ${OUT_LIB_PATH} ]; then
 	mkdir ${OUT_LIB_PATH}
 fi
 
 cd ${OUT_LIB_PATH}
-cmake -DBUILD_TYPE=${BUILD_TYPE} -DBUILD_OPTION="${BUILD_OPTION}" ${FIBGIT_LIB_CMAKELIST_PATH} > CMake.log
+cmake -DBUILD_TYPE=${BUILD_TYPE} -DBUILD_OPTION="${BUILD_OPTION}" ${FXJS_LIB_CMAKELIST_PATH} > CMake.log
 if [ $? != 0 ]; then
 	exit 1
 fi
@@ -169,16 +144,16 @@ fi
 if [ $? != 0 ]; then
 	exit 1
 fi
-# [fibgit:libs]Compile lib of fibgit :end
+# [fxjs:libs]Compile lib of fxjs :end
 
-# [fibgit:main]Compile main fibgit :start
+# [fxjs:main]Compile main fxjs :start
 OUT_MAIN_PATH=${OUT_PATH}/program
 if [ ! -e ${OUT_MAIN_PATH} ]; then
 	mkdir ${OUT_MAIN_PATH}
 fi
 
 cd ${OUT_MAIN_PATH}
-cmake ${CMAKE_VARS_2_FIBGIT_COMPILATION} -DBUILD_TYPE=${BUILD_TYPE} -DBUILD_OPTION="${BUILD_OPTION}" ${FIBGIT_MAIN_CMAKELIST_PATH} > CMake.log
+cmake ${CMAKE_VARS_2_FXJS_COMPILATION} -DBUILD_TYPE=${BUILD_TYPE} -DBUILD_OPTION="${BUILD_OPTION}" ${FXJS_MAIN_CMAKELIST_PATH} > CMake.log
 if [ $? != 0 ]; then
 	exit 1
 fi
@@ -191,28 +166,28 @@ fi
 if [ $? != 0 ]; then
 	exit 1
 fi
-# [fibgit:main]Compile main fibgit :end
+# [fxjs:main]Compile main fxjs :end
 
 # [fibjs]Compile project based on fibjs :end
 
 if [ "${BUILD_TYPE}" = "release" ]; then
 	cd "${BIN_PATH}"
 	cp "${ROOT_PATH}/installer.txt" "installer.sh"
-	tar -zcf fibgit.tar.gz fibgit
-	echo '[100%] Built target fibgit.tar.gz'
-	cat fibgit.tar.gz >> installer.sh
+	tar -zcf fxjs.tar.gz fxjs
+	echo '[100%] Built target fxjs.tar.gz'
+	cat fxjs.tar.gz >> installer.sh
 	chmod 777 installer.sh
 	echo '[100%] Built target install.sh'
 
 	if [ $TARGET_OS = "Linux" ]; then
 		echo ''
 		echo '==== GLIBC ===='
-		objdump fibgit -p | grep GLIBC_[0-9.]* -o | sort | uniq
+		objdump fxjs -p | grep GLIBC_[0-9.]* -o | sort | uniq
 	fi
 
 	if [ "${CI}" = "ci" ]; then
-		xz -cz -T2 fibgit > fibgit.xz
-		echo '[100%] Built target fibgit.xz'
+		xz -cz -T2 fxjs > fxjs.xz
+		echo '[100%] Built target fxjs.xz'
 	fi
 fi
 
@@ -226,7 +201,7 @@ printf "\n\n${bldred}"
 
 printf "${txtrst}"
 
-printf "\\n\\tfibgit has been successfully built.\\n\\n"
+printf "\\n\\tfxjs has been successfully built.\\n\\n"
 
 # printf "\\tFor more information:\\n\\n"
-# printf "\\tfibgit website: http://fibgit.io\\n"
+# printf "\\tfxjs website: http://fxjs.io\\n"
