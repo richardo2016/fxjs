@@ -1,0 +1,181 @@
+cmake_minimum_required(VERSION 2.6)
+
+set(FIBJS_ROOT_DIR ${CMAKE_SOURCE_DIR}/../deps/fibjs)
+set(FXJSLIB_DIR ${CMAKE_SOURCE_DIR}/../deps/fxjslib)
+
+include(${FIBJS_ROOT_DIR}/fibjs/tools/arch.cmake)
+include(${FIBJS_ROOT_DIR}/fibjs/tools/os.cmake)
+include(${FIBJS_ROOT_DIR}/fibjs/tools/platform.cmake)
+include(${FIBJS_ROOT_DIR}/fibjs/tools/subdirs.cmake)
+
+project(fxjs)
+
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+	set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+	set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+endif(CCACHE_FOUND)
+
+file(GLOB_RECURSE src_list "src/*.c*")
+
+if (${OS} STREQUAL "Windows")
+	# add quote to all paths in CMAKE_RC_COMPILE_OBJECT to make it robustic on Windows.
+	#
+	# BTW, sh.exe cannot deal with args of `llvm-rc.exe` correctly
+	# @see https://stackoverflow.com/questions/34647591/passing-windows-slash-based-parameters-to-a-program-from-bash-script
+	set(CMAKE_RC_COMPILE_OBJECT "<CMAKE_RC_COMPILER> //l 0x409 \"<SOURCE>\" //nologo //fo <OBJECT>")
+	set(CMAKE_RC_COMPILER llvm-rc)
+
+	add_executable(fxjs ${src_list} res/fxjs.rc)
+	add_executable(fxjs_gui WIN32 ${src_list} res/fxjs.rc)
+else()
+	add_executable(fxjs ${src_list})
+endif()
+
+set(BIN_DIR ${PROJECT_SOURCE_DIR}/../bin/${OS}_${ARCH}_${BUILD_TYPE})
+set(FIBJS_BIN_DIR ${FIBJS_ROOT_DIR}/bin/${OS}_${ARCH}_${BUILD_TYPE})
+set(EXECUTABLE_OUTPUT_PATH ${BIN_DIR})
+
+include(CheckIncludeFiles)
+include(CheckCSourceCompiles)
+
+set(CMAKE_C_FLAGS "${BUILD_OPTION}")
+
+check_include_files(iconv.h HAVE_ICONV_H)
+
+check_c_source_compiles("void posix_spawnp();
+	__asm__(\".symver posix_spawnp,posix_spawnp@GLIBC_2.2.5\");
+	int main(void){posix_spawnp();return 0;}" HAVE_GLIB_C_225_H)
+
+check_c_source_compiles("void posix_spawnp();
+	__asm__(\".symver posix_spawnp,posix_spawnp@GLIBC_2.2\");
+	int main(void){posix_spawnp();return 0;}" HAVE_GLIB_C_22_H)
+
+check_c_source_compiles("void fcntl();
+	__asm__(\".symver fcntl,fcntl@GLIBC_2.2.5\");
+	int main(void){fcntl();return 0;}" HAVE_GLIB_C_FCNTL_225_H)
+
+check_c_source_compiles("void fcntl();
+	__asm__(\".symver fcntl,fcntl@GLIBC_2.0\");
+	int main(void){fcntl();return 0;}" HAVE_GLIB_C_FCNTL_2_H)
+
+check_c_source_compiles("void fcntl();
+	__asm__(\".symver fcntl,fcntl@GLIBC_2.4\");
+	int main(void){fcntl();return 0;}" HAVE_GLIB_C_FCNTL_24_H)
+
+check_c_source_compiles("void fcntl();
+	__asm__(\".symver fcntl,fcntl@GLIBC_2.17\");
+	int main(void){fcntl();return 0;}" HAVE_GLIB_C_FCNTL_217_H)
+
+check_c_source_compiles("#include <stdatomic.h>
+	atomic_int a;
+	int main(void){atomic_load(&a);return 0;}" HAVE_GLIB_C_ATOMIC_H)
+
+set(flags "-fsigned-char -fmessage-length=0 -fdata-sections -ffunction-sections -D_FILE_OFFSET_BITS=64")
+set(ccflags "${ccflags} ${CXX_STD_VER_FLAG}")
+set(link_flags " ")
+
+if(${BUILD_TYPE} STREQUAL "release")
+	set(flags "${flags} -O3 -s ${BUILD_OPTION} -w -fvisibility=hidden")
+
+	if(${OS} STREQUAL "FreeBSD")
+		set(flags "${flags} -fno-omit-frame-pointer")
+	else()
+		set(flags "${flags} -fomit-frame-pointer")
+	endif()
+
+	set(link_flags "${link_flags} ${BUILD_OPTION} -static-libstdc++")
+	add_definitions(-DNDEBUG=1)
+
+	if(${OS} STREQUAL "Linux")
+		set(link_flags "${link_flags} ${link_flags} -static-libgcc")
+	endif()
+
+	if(HAVE_GLIB_C_225_H)
+		set(link_flags "${link_flags} -Wl,--wrap=memcpy")
+	endif()
+endif()
+
+if(${BUILD_TYPE} STREQUAL "debug")
+	set(flags "${flags} -g -O0 ${BUILD_OPTION} -Wall -Wno-overloaded-virtual")
+	set(link_flags "${link_flags} ${BUILD_OPTION}")
+	add_definitions(-DDEBUG=1)
+endif()
+
+set(CMAKE_C_FLAGS "${flags}")
+set(CMAKE_CXX_FLAGS "${flags} ${ccflags}")
+
+include_directories(
+	"${FXJSLIB_DIR}/include"
+	"${FIBJS_ROOT_DIR}/fibjs/include"
+	"${FIBJS_ROOT_DIR}/vender"
+	"${FIBJS_ROOT_DIR}/vender/v8"
+	"${FIBJS_ROOT_DIR}/vender/v8/include"
+	"${FIBJS_ROOT_DIR}/vender/mbedtls"
+	"${FIBJS_ROOT_DIR}/vender/zlib/include"
+	"${CMAKE_CURRENT_BINARY_DIR}"
+)
+
+if(${OS} STREQUAL "Windows")
+	set(libs fxjslib expat gumbo gd tiff jpeg png webp zlib leveldb snappy msgpack pcre sqlite mongo umysql uuid exif mbedtls v8 unzip exlib winiconv)
+else()
+	set(libs fxjslib expat gumbo gd tiff jpeg png webp zlib leveldb snappy msgpack pcre sqlite mongo umysql uuid exif mbedtls v8 unzip exlib ev editline jemalloc)
+endif()
+
+foreach(lib ${libs})
+	if(${lib} STREQUAL "fxjslib")
+		set(libbin ${BIN_DIR}/lib${lib}${CMAKE_STATIC_LIBRARY_SUFFIX})
+	else()
+		set(libbin ${FIBJS_BIN_DIR}/lib${lib}${CMAKE_STATIC_LIBRARY_SUFFIX})
+	endif()
+	target_link_libraries(fxjs "${libbin}")
+	if(${OS} STREQUAL "Windows")
+		target_link_libraries(fxjs_gui "${libbin}")
+	endif()
+endforeach()
+
+if(NOT ${OS} STREQUAL "Windows")
+	target_link_libraries(fxjs pthread)
+endif()
+
+if(${OS} STREQUAL "Darwin")
+	set(link_flags "${link_flags} -mmacosx-version-min=10.9 -framework Carbon -framework IOKit")
+	set(flags "${flags} -mmacosx-version-min=10.9")
+	target_link_libraries(fxjs dl iconv stdc++)
+endif()
+
+if(${OS} STREQUAL "Windows")
+	add_definitions(-DWIN32 -D_LIB -D_CRT_SECURE_NO_WARNINGS -D_CRT_RAND_S -DNOMINMAX)
+	set(flags "${flags} -fms-extensions -fmsc-version=1910 -frtti")
+	set(link_flags "${link_flags} -lwinmm -lws2_32 -lpsapi -ldbghelp -lshlwapi -lurlmon -luserenv -ladvapi32 -lkernel32")
+	set(link_flags "${link_flags} -Xlinker //OPT:ICF -Xlinker //ERRORREPORT:PROMPT -Xlinker //NOLOGO -Xlinker //TLBID:1")
+
+	if(${ARCH} STREQUAL "amd64")
+		set(flags "${flags} -m64")
+	elseif(${ARCH} STREQUAL "i386")
+		set(flags "${flags} -m32")
+	endif()
+endif()
+
+if(${OS} STREQUAL "Linux")
+	target_link_libraries(fxjs dl rt)
+endif()
+
+if(${OS} STREQUAL "FreeBSD")
+	find_library(execinfo execinfo "/usr/local/lib" "/usr/lib")
+	target_link_libraries(fxjs ${execinfo})
+endif()
+
+if((NOT ${OS} STREQUAL "Windows") AND (NOT HAVE_GLIB_C_ATOMIC_H))
+	target_link_libraries(fxjs atomic)
+endif()
+
+if(${OS} STREQUAL "Windows")
+	target_compile_definitions(fxjs PUBLIC -D_CONSOLE)
+	set_target_properties(fxjs PROPERTIES LINK_FLAGS "${link_flags} -Xlinker //SUBSYSTEM:CONSOLE")
+
+	target_compile_definitions(fxjs_gui PUBLIC -D_WINDOWS)
+	set_target_properties(fxjs_gui PROPERTIES LINK_FLAGS "${link_flags} -Xlinker //SUBSYSTEM:WINDOWS")
+else()
+	set_target_properties(fxjs PROPERTIES LINK_FLAGS ${link_flags})
+endif()

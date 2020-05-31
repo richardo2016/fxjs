@@ -1,0 +1,4 @@
+[submodule "deps/fibjs"]
+	path = deps/fibjs
+	url = git@github.com:fibjs/fibjs.git
+	branch = dev
