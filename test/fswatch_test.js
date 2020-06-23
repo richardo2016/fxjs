@@ -15,14 +15,15 @@ describe('fs.watch*', () => {
         rmFile(path.resolve(__dirname, './fswatch_files'));
         ensureDirectoryExisted(path.resolve(__dirname, './fswatch_files'));
     })
-    describe.skip("manual watch", () => {
+
+    process.env.MANUAL && describe.only("manual watch", () => {
         it("try not quit", () => {
             let count = 0;
             let evt = new coroutine.Event();
             const watcher = fs.watch(
                 './test/fswatch_files/nogit-manual.txt',
                 (evt_type, filename) => {
-                    console.log('观察到了 evt_type: %s; filename: %s', evt_type, filename)
+                    console.log('watched evt_type: %s; filename: %s', evt_type, filename)
                     if (++count > 10) {
                         watcher.close()
                         evt.set()
@@ -50,10 +51,58 @@ describe('fs.watch*', () => {
         fs.unlink(rel)
     }
 
+    describe("::close", () => {
+        it("robust: allow multiple times close(though it's pointless)", () => {
+            const relpath = `./fswatch_files/nogit-${uuid.snowflake().hex()}.txt`
+            // ensure it existed
+            writeFile(resolve_reltocwd(relpath), '')
+
+            const watcher = fs.watch(
+                resolve_reltocwd(relpath)
+            )
+
+            for (let i = 0; i < 10; i++)
+                watcher.close();
+        });
+
+        it("robust: allow multiple times close(though it's pointless)", () => {
+            var triggedCallback = false;
+            const relpath = `./fswatch_files/nogit-${uuid.snowflake().hex()}.txt`
+            // ensure it existed
+            writeFile(resolve_reltocwd(relpath), '')
+
+            const watcher = fs.watch(
+                resolve_reltocwd(relpath),
+                () => {
+                    triggedCallback = true;
+                    watcher.close();
+                }
+            )
+
+            // change it
+            for (let i = 0; i < 10; i++)
+                writeFile(resolve_reltocwd(relpath), 'abc')
+
+            coroutine.sleep(50);
+            for (let i = 0; i < 10; i++)
+                watcher.close();
+
+            assert.ok(triggedCallback);
+        });
+    })
+
+    it("hold process if last watcher not close", () => {
+        var p = process.open(process.execPath, [path.join(__dirname, 'fswatch_test', 'hold1.js')]);
+        assert.equal(p.stdout.readLine(), "after start watching");
+        assert.equal(p.stdout.readLine(), "watched");
+        assert.equal(p.wait(), 9);
+    });
+
     describe("write file", () => {
         var proc = ({
             changeEventSource = '',
             next,
+            recursive = true
         }) => {
             var _uuid = uuid.snowflake().hex()
             var relfile = resolve_reltocwd(`./fswatch_files/nogit-${_uuid}.txt`)
@@ -71,10 +120,10 @@ describe('fs.watch*', () => {
             }
             switch (changeEventSource) {
                 case 'listener':
-                    watcher = fs.watch(relfile, _handler)
+                    watcher = fs.watch(relfile, { recursive }, _handler)
                     break
                 case 'register':
-                    watcher = fs.watch(relfile)
+                    watcher = fs.watch(relfile, { recursive })
                     watcher.on('change', _handler)
                     break
             }
@@ -114,8 +163,16 @@ describe('fs.watch*', () => {
             proc({ changeEventSource: 'listener', next });
         });
 
+        it(`event: 'change', from listener, recursive`, (next) => {
+            proc({ changeEventSource: 'listener', next, recursive: true });
+        });
+
         it(`event: 'change', from register`, (next) => {
             proc({ changeEventSource: 'register', next });
+        });
+
+        it(`event: 'change', from register, recursive`, (next) => {
+            proc({ changeEventSource: 'register', next, recursive: true });
         });
     });
 

@@ -30,7 +30,7 @@ namespace fibjs {
 void InitializeDateUtils();
 void InitializeAcPool();
 void InitializeAsyncIOThread();
-void initializeFSIOThread();
+void initializeUVAsyncThread();
 void SubscribeProcessSignal();
 void init_sym();
 
@@ -58,7 +58,7 @@ static void createBasisForFiberLoop(v8::Platform* (*get_platform)())
     InitializeDateUtils();
     InitializeAcPool();
     InitializeAsyncIOThread();
-    initializeFSIOThread();
+    initializeUVAsyncThread();
     SubscribeProcessSignal();
 
 #ifdef Linux

@@ -24,6 +24,7 @@ public:
         : m_filename(target)
         , m_Persistent(persistent)
         , m_recursiveForDir(recursive)
+        , m_closed(false)
         , m_proc(NULL)
     {
         if (!callback.IsEmpty()) {
@@ -71,8 +72,11 @@ public:
             } else if (hasRename) {
                 only_evtType = "renameonly";
                 v[0] = "rename";
-            } else
-                finished();
+            } else {
+                m_watcher->onError(CALL_E_INVALID_CALL, "Unknown change event type");
+                m_watcher->close();
+                return;
+            }
 
 #ifdef Darwin
             if (m_fs_handle.realpath)
@@ -91,8 +95,6 @@ public:
         void finished()
         {
             uv_fs_event_stop(&m_fs_handle);
-
-            delete this;
         }
 
     public:
@@ -113,14 +115,17 @@ public:
 public:
     void onError(result_t hr, const char* msg)
     {
-        obj_ptr<EventInfo> ei = new EventInfo(this, "error", hr, msg);
-
-        _emit("error", ei);
+        _emit("error", new EventInfo(this, "error", hr, msg));
     }
 
 public:
     void start()
     {
+        if (m_closed) {
+            onError(CALL_E_INVALID_CALL, "cannot re-start one closed FSWatcher");
+            return;
+        }
+
         if (m_Persistent)
             isolate_ref();
 
@@ -129,8 +134,13 @@ public:
     // FSWatcher_base
     virtual result_t close()
     {
-        if (m_Persistent)
+        if (m_closed)
+            return 0;
+
+        if (m_Persistent && !m_closed)
             isolate_unref();
+
+        m_closed = true;
 
         if (m_proc)
             m_proc->finished();
@@ -159,6 +169,7 @@ protected:
 
     bool m_Persistent;
     bool m_recursiveForDir;
+    bool m_closed;
     AsyncWatchFSProc* m_proc;
 };
 }

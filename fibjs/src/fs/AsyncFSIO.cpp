@@ -22,16 +22,16 @@ void uvAsyncEvent::post()
 void FSWatcher::AsyncWatchFSProc::start()
 {
     uv_fs_event_init(s_uv_loop, &m_fs_handle);
-    int32_t hr = uv_fs_event_start(&m_fs_handle, fs_event_cb, m_watcher->get_target(), m_watcher->isRecursiveForDir() ? UV_FS_EVENT_RECURSIVE : NULL);
-    if (hr != 0) {
-        m_watcher->onError(hr, uv_strerror(hr));
-        finished();
+    int32_t uv_err_no = uv_fs_event_start(&m_fs_handle, fs_event_cb, m_watcher->get_target(), m_watcher->isRecursiveForDir() ? UV_FS_EVENT_RECURSIVE : NULL);
+    if (uv_err_no != 0) {
+        m_watcher->onError(CALL_E_INVALID_CALL, uv_strerror(uv_err_no));
+        m_watcher->close();
     }
 }
 
-class FSIOThread : public exlib::OSThread {
+class UVAsyncThread : public exlib::OSThread {
 public:
-    FSIOThread()
+    UVAsyncThread()
     {
         m_lock.lock();
         uv_loop_init(s_uv_loop);
@@ -66,9 +66,9 @@ public:
     exlib::spinlock m_lock;
 };
 
-void initializeFSIOThread()
+void initializeUVAsyncThread()
 {
-    static FSIOThread s_afsIO;
+    static UVAsyncThread s_afsIO;
     s_afsIO.start();
 }
 }

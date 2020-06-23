@@ -574,15 +574,16 @@ result_t fs_base::watch(exlib::string fname, v8::Local<v8::Object> options, v8::
             return hr;
     }
 
-    NObject* opts = new NObject();
-    opts->add(options);
-    Variant v;
+    Isolate* isolate = Isolate::current();
+    bool persistent = true;
+    hr = GetConfigValue(isolate->m_isolate, options, "persistent", persistent, true);
+    if (hr < 0 && hr != CALL_E_PARAMNOTOPTIONAL)
+        return hr;
 
-    opts->get("persistent", v);
-    bool persistent = v.isUndefined() ? true : v.boolVal();
-
-    opts->get("recursive", v);
-    bool recursive = v.isUndefined() ? false : v.boolVal();
+    bool recursive = false;
+    hr = GetConfigValue(isolate->m_isolate, options, "recursive", recursive, true);
+    if (hr < 0 && hr != CALL_E_PARAMNOTOPTIONAL)
+        return hr;
 
     obj_ptr<FSWatcher> pFW = new FSWatcher(safe_name, callback, persistent, recursive);
     retVal = pFW;
