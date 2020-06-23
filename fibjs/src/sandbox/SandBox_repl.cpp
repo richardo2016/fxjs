@@ -158,10 +158,8 @@ result_t SandBox::Context::repl(v8::Local<v8::Array> cmds, Stream_base* out)
         bs = new BufferedStream(out);
     }
 
-    exlib::string str_ver("Welcome to " + appname + " ");
+    exlib::string str_ver("Welcome to " + appname + " " + fxjs_version + " (fibjs/" + fibjs_version + ").");
 
-    str_ver += fibjs_version;
-    str_ver += '.';
     output(console_base::_INFO, str_ver);
     output(console_base::_INFO, "Type \".help\" for more information.");
 

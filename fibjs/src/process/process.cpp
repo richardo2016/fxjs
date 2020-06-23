@@ -110,7 +110,7 @@ result_t process_base::get_execArgv(v8::Local<v8::Array>& retVal)
 
 result_t process_base::get_version(exlib::string& retVal)
 {
-    retVal = fibjs_version;
+    retVal = fxjs_version;
     return 0;
 }
 

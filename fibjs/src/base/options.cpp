@@ -115,7 +115,7 @@ void options(int32_t& pos, char* argv[])
             printHelp();
             _exit(0);
         } else if (!qstrcmp(arg, "--version") || !qstrcmp(arg, "-v")) {
-            printf("v%s\n", fibjs_version);
+            printf("v%s\n", fxjs_version);
             _exit(0);
         } else if (!qstrcmp(arg, "--use-thread")) {
             exlib::Service::use_thread = true;

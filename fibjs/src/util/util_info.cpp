@@ -51,6 +51,7 @@ public:
         g_info = new NObject();
 
         g_info->add("fibjs", fibjs_version);
+        g_info->add("fxjs", fxjs_version);
         g_info->add("node", "0.0.0");
 
 #ifdef GIT_INFO
