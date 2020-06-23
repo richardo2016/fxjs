@@ -1,0 +1,64 @@
+image: Visual Studio 2017
+
+environment:
+  CI: 'ci'
+  CMAKE_RC_COMPILER: 'llvm-rc.exe'
+
+platform:
+  - x64
+  - x86
+
+configuration: Release
+
+install:
+  - call "%APPVEYOR_BUILD_FOLDER%\.appveyor\set-git-bash.cmd"
+  - call "%APPVEYOR_BUILD_FOLDER%\.appveyor\install-llvm.cmd"
+  - call "%APPVEYOR_BUILD_FOLDER%\.appveyor\set-llvm.cmd"
+  - git submodule init
+  - git submodule update
+  - call "%APPVEYOR_BUILD_FOLDER%\.appveyor\set-vender.cmd"
+
+build_script:
+  - IF /I "%PLATFORM%" == "x64" ECHO "x64 building..." && build release amd64
+  - IF /I "%PLATFORM%" == "x64" IF /I "%APPVEYOR_REPO_TAG%" == "false" ( .\bin\Windows_amd64_release\fxjs.exe --prof .\test\main.js )
+  - IF /I "%PLATFORM%" == "x86" ECHO "x86 building..." && build release i386
+  - IF /I "%PLATFORM%" == "x86" IF /I "%APPVEYOR_REPO_TAG%" == "false" ( .\bin\Windows_i386_release\fxjs.exe --prof .\test\main.js )
+  - IF /I "%APPVEYOR_REPO_TAG%" == "false" set APPVEYOR_REPO_TAG_NAME=dist
+  - mkdir %APPVEYOR_REPO_TAG_NAME%
+  - IF /I "%PLATFORM%" == "x64" copy .\bin\Windows_amd64_release\fxjs.exe .\%APPVEYOR_REPO_TAG_NAME%\fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-x64.exe
+  - IF /I "%PLATFORM%" == "x64" copy .\bin\Windows_amd64_release\fxjs_gui.exe .\%APPVEYOR_REPO_TAG_NAME%\fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-gui-x64.exe
+  - IF /I "%PLATFORM%" == "x64" copy .\bin\Windows_amd64_release\installer.exe .\%APPVEYOR_REPO_TAG_NAME%\installer-%APPVEYOR_REPO_TAG_NAME%-windows-x64.exe
+  - IF /I "%PLATFORM%" == "x64" copy .\bin\Windows_amd64_release\fxjs.cab .\%APPVEYOR_REPO_TAG_NAME%\fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-x64.cab
+  - IF /I "%PLATFORM%" == "x86" copy .\bin\Windows_i386_release\fxjs.exe .\%APPVEYOR_REPO_TAG_NAME%\fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-x86.exe
+  - IF /I "%PLATFORM%" == "x86" copy .\bin\Windows_i386_release\fxjs_gui.exe .\%APPVEYOR_REPO_TAG_NAME%\fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-gui-x86.exe
+  - IF /I "%PLATFORM%" == "x86" copy .\bin\Windows_i386_release\installer.exe .\%APPVEYOR_REPO_TAG_NAME%\installer-%APPVEYOR_REPO_TAG_NAME%-windows-x86.exe
+  - IF /I "%PLATFORM%" == "x86" copy .\bin\Windows_i386_release\fxjs.cab .\%APPVEYOR_REPO_TAG_NAME%\fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-x86.cab
+test: off
+
+matrix:
+  fast_finish: true
+artifacts:
+  - path: .\%APPVEYOR_REPO_TAG_NAME%\fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-x64.exe
+    name: fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-x64.exe
+  - path: .\%APPVEYOR_REPO_TAG_NAME%\fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-gui-x64.exe
+    name: fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-gui-x64.exe
+  - path: .\%APPVEYOR_REPO_TAG_NAME%\fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-x64.cab
+    name: fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-x64.cab
+  - path: .\%APPVEYOR_REPO_TAG_NAME%\installer-%APPVEYOR_REPO_TAG_NAME%-windows-x64.exe
+    name: installer-%APPVEYOR_REPO_TAG_NAME%-windows-x64.exe
+  - path: .\%APPVEYOR_REPO_TAG_NAME%\fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-x86.exe
+    name: fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-x86.exe
+  - path: .\%APPVEYOR_REPO_TAG_NAME%\fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-gui-x86.exe
+    name: fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-gui-x86.exe
+  - path: .\%APPVEYOR_REPO_TAG_NAME%\installer-%APPVEYOR_REPO_TAG_NAME%-windows-x86.exe
+    name: installer-%APPVEYOR_REPO_TAG_NAME%-windows-x86.exe
+  - path: .\%APPVEYOR_REPO_TAG_NAME%\fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-x86.cab
+    name: fxjs-%APPVEYOR_REPO_TAG_NAME%-windows-x86.cab
+deploy:
+  - provider: GitHub
+    auth_token:
+      secure: ZyGld15wmo+rBgUJE8m1qtCc9yCN1Ztw59oeHX+HWGlWEbDLljxkf4nwHA1G912z
+    draft: false
+    prerelease: false
+    on:
+      appveyor_repo_tag: true

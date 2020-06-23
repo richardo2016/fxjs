@@ -1,0 +1,436 @@
+
+/*! @brief 控制台访问对象
+
+ 全局对象。可用于提示信息，警告和错误记录。通过启动配置文件，可将日志定位到不同的设备，以便于跟踪。日志支持格式化输出，例如：
+ ```JavaScript
+ console.log("%d + %d = %d", 100, 200, 100 + 200);
+ ```
+ 可以使用的格式化参数如下：
+ - %s - 字符串
+ - %d - 数字，包括整数和数字
+ - %j - 以 JSON 格式输出对象
+ - %% - 输出字符 '%' 本身
+ */
+module console
+{
+    /*! @brief loglevel 级别常量 */
+    const FATAL = 0;
+
+    /*! @brief loglevel 级别常量 */
+    const ALERT = 1;
+
+    /*! @brief loglevel 级别常量 */
+    const CRIT = 2;
+
+    /*! @brief loglevel 级别常量 */
+    const ERROR = 3;
+
+    /*! @brief loglevel 级别常量 */
+    const WARN = 4;
+
+    /*! @brief loglevel 级别常量 */
+    const NOTICE = 5;
+
+    /*! @brief loglevel 级别常量 */
+    const INFO = 6;
+
+    /*! @brief loglevel 级别常量 */
+    const DEBUG = 7;
+
+    /*! @brief loglevel 仅用于输出，信息输出后不换行，file 和 syslog 不保存此级别信息 */
+    const PRINT = 9;
+
+    /*! @brief loglevel 级别常量 */
+    const NOTSET = 10;
+
+    /*! @brief 输出级别，用以过滤输出信息，缺省为 NOTSET，全部输出。信息过滤之后才会输出给 add 设定的各个设备。
+     */
+    static Integer loglevel;
+
+    /*! @brief 查询终端每行字符数 */
+    static readonly Integer width;
+
+    /*! @brief 查询终端行数 */
+    static readonly Integer height;
+
+    /*! @brief 添加 console 输出系统，支持的设备为 console, syslog, event，最多可以添加 10 个输出
+
+     通过配置 console，可以将程序输出和系统错误发往不同设备，用于运行环境信息收集。
+
+     type 为配置，为设备名称字符串：
+
+     ```JavaScript
+     console.add("console");
+     ```
+
+     syslog 仅在 posix 平台有效：
+     ```JavaScript
+     console.add("syslog");
+     ```
+
+     event 仅在 windows 平台有效：
+     ```JavaScript
+     console.add("event");
+     ```
+
+     @param type 输出设备
+     */
+    static add(String type);
+
+    /*! @brief 添加 console 输出系统，支持的设备为 console, syslog, event 和 file，最多可以添加 10 个输出
+
+     通过配置 console，可以将程序输出和系统错误发往不同设备，用于运行环境信息收集。
+
+     cfg 可以为一个设备配置对象：
+     ```JavaScript
+     console.add({
+        type: "console",
+        levels: [console.INFO, console.ERROR]  // 选项，省略则输出全部级别日志
+     });
+     ```
+
+     syslog 仅在 posix 平台有效：
+     ```JavaScript
+     console.add({
+        type: "syslog",
+        levels: [console.INFO, console.ERROR]
+     });
+     ```
+
+     event 仅在 windows 平台有效：
+     ```JavaScript
+     console.add({
+        type: "event",
+        levels: [console.INFO, console.ERROR]
+     });
+     ```
+
+     file 日志：
+     ```JavaScript
+     console.add({
+        type: "file",
+        levels: [console.INFO, console.ERROR],
+        // 必选项，指定日志输出文件，可使用 s% 指定插入日期位置，不指定则添加在结尾
+        path: "path/to/file_%s.log",
+        // 选项，可选值为 "day", "hour", "minute", "###k", "###m", "###g"，缺省为 "1m"
+        split: "30m",
+        // 选项，可选范围为 2-128，缺省为 128
+        count: 10
+     });
+     ```
+
+     @param cfg 输出配置
+     */
+    static add(Object cfg);
+
+    /*! @brief 批量添加 console 输出系统，支持的设备为 console, syslog, event 和 file，最多可以添加 10 个输出
+
+     通过配置 console，可以将程序输出和系统错误发往不同设备，用于运行环境信息收集。
+
+     ```JavaScript
+     console.add(["console", {
+        type: "syslog",
+        levels: [console.INFO, console.ERROR]
+     }]);
+     ```
+
+     @param cfg 输出配置数组
+     */
+    static add(Array cfg);
+
+    /*! @brief 初始化到缺省设置，只在 console 输出信息 */
+    static reset();
+
+    /*! @brief 记录普通日志信息，与 info 等同
+
+     记录一般等级的日志信息。通常用于输出非错误性提示信息。
+     @param fmt 格式化字符串
+     @param args 可选参数列表
+     */
+    static log(String fmt, ...args);
+
+    /*! @brief 记录普通日志信息，与 info 等同
+
+     记录一般等级的日志信息。通常用于输出非错误性提示信息。
+     @param args 可选参数列表
+     */
+    static log(...args);
+
+    /*! @brief 记录调试日志信息
+
+     记录调试日志信息。通常用于输出调试信息。不重要。
+     @param fmt 格式化字符串
+     @param args 可选参数列表
+     */
+    static debug(String fmt, ...args);
+
+    /*! @brief 记录调试日志信息
+
+     记录调试日志信息。通常用于输出调试信息。不重要。
+     @param args 可选参数列表
+     */
+    static debug(...args);
+
+    /*! @brief 记录普通日志信息，与 log 等同
+
+     记录一般等级的日志信息。通常用于输出非错误性提示信息。
+     @param fmt 格式化字符串
+     @param args 可选参数列表
+     */
+    static info(String fmt, ...args);
+
+    /*! @brief 记录普通日志信息，与 log 等同
+
+     记录一般等级的日志信息。通常用于输出非错误性提示信息。
+     @param args 可选参数列表
+     */
+    static info(...args);
+
+    /*! @brief 记录警告日志信息
+
+     记录警告日志信息。通常用于输出提示性调试信息。一般重要。
+     @param fmt 格式化字符串
+     @param args 可选参数列表
+     */
+    static notice(String fmt, ...args);
+
+    /*! @brief 记录警告日志信息
+
+     记录警告日志信息。通常用于输出提示性调试信息。一般重要。
+     @param args 可选参数列表
+     */
+    static notice(...args);
+
+    /*! @brief 记录警告日志信息
+
+     记录警告日志信息。通常用于输出警告性调试信息。重要。
+     @param fmt 格式化字符串
+     @param args 可选参数列表
+     */
+    static warn(String fmt, ...args);
+
+    /*! @brief 记录警告日志信息
+
+     记录警告日志信息。通常用于输出警告性调试信息。重要。
+     @param args 可选参数列表
+     */
+    static warn(...args);
+
+    /*! @brief 记录错误日志信息
+
+     记录用于错误日志信息。通常用于输出错误信息。非常重要。系统的出错信息也会以此等级记录。
+     @param fmt 格式化字符串
+     @param args 可选参数列表
+     */
+    static error(String fmt, ...args);
+
+    /*! @brief 记录错误日志信息
+
+     记录用于错误日志信息。通常用于输出错误信息。非常重要。系统的出错信息也会以此等级记录。
+     @param args 可选参数列表
+     */
+    static error(...args);
+
+    /*! @brief 记录关键错误日志信息
+
+     记录用于关键错误日志信息。通常用于输出关键错误信息。非常重要。
+     @param fmt 格式化字符串
+     @param args 可选参数列表
+     */
+    static crit(String fmt, ...args);
+
+    /*! @brief 记录关键错误日志信息
+
+     记录用于关键错误日志信息。通常用于输出关键错误信息。非常重要。
+     @param args 可选参数列表
+     */
+    static crit(...args);
+
+    /*! @brief 记录警报错误日志信息
+
+     记录用于警报错误日志信息。通常用于输出警报错误信息。非常重要。为最高级别信息。
+     @param fmt 格式化字符串
+     @param args 可选参数列表
+     */
+    static alert(String fmt, ...args);
+
+    /*! @brief 记录警报错误日志信息
+
+     记录用于警报错误日志信息。通常用于输出警报错误信息。非常重要。为最高级别信息。
+     @param args 可选参数列表
+     */
+    static alert(...args);
+
+    /*! @brief 用 JSON 格式输出对象
+     @param obj 给定要显示的对象
+     */
+    static dir(Value obj);
+
+    /*! @brief 启动一个计时器
+
+     @param label 标题，缺省为空字符串。
+     */
+    static time(String label = "time");
+
+    /*! @brief 输出指定计时器当前计时值
+
+     @param label 标题，缺省为空字符串。
+     */
+    static timeElapse(String label = "time");
+
+    /*! @brief 结束指定计时器，并输出最后计时值
+
+     @param label 标题，缺省为空字符串。
+     */
+    static timeEnd(String label = "time");
+
+    /*! @brief 输出当前调用堆栈
+
+     通过日志输出当前调用堆栈。
+     @param label 标题，缺省为空字符串。
+     */
+    static trace(String label = "trace");
+
+    /*! @brief 断言测试，如果测试值为假，则报错
+     @param value 测试的数值
+     @param msg 报错信息
+     */
+    static assert(Value value, String msg = "");
+
+    /*! @brief 向控制台输出格式化文本，输出内容不会记入日志系统，输出文本后不会自动换行，可连续输出
+     @param fmt 格式化字符串
+     @param args 可选参数列表
+     */
+    static print(String fmt, ...args);
+
+    /*! @brief 向控制台输出格式化文本，输出内容不会记入日志系统，输出文本后不会自动换行，可连续输出
+     @param args 可选参数列表
+     */
+    static print(...args);
+
+    /*! @brief 移动控制台光标到指定位置
+     @param row 指定新光标的行坐标
+     @param column 指定新光标的列坐标
+     */
+    static moveTo(Integer row, Integer column);
+
+    /*! @brief 隐藏控制台光标 */
+    static hideCursor();
+
+    /*! @brief 显示控制台光标 */
+    static showCursor();
+
+    /*! @brief 清除控制台 */
+    static clear();
+
+    /*! @brief 按下一个按键
+
+     参数 key 可以使用字符串传入功能键：
+     - 功能键：f1 - f12
+     - 方向键：up, down,left, right, home, end, pageup, pagedown
+     - 编辑键：backspace, delete, insert, enter, tab, escape, space
+     - 控制键：control, alt, shift, command
+     @param key 指定按键，单字符直接传入，功能键传入名称
+     @param modifier 指定控制键，可以为：control, alt, shift, command
+     */
+    static keyDown(String key, String modifier = "");
+
+    /*! @brief 按下一个按键
+
+     参数 key 可以使用字符串传入功能键：
+     - 功能键：f1 - f12
+     - 方向键：up, down,left, right, home, end, pageup, pagedown
+     - 编辑键：backspace, delete, insert, enter, tab, escape, space
+     - 控制键：control, alt, shift, command
+     @param key 指定按键，单字符直接传入，功能键传入名称
+     @param modifier 指定控制键数组，可以为：control, alt, shift, command
+     */
+    static keyDown(String key, Array modifier);
+
+    /*! @brief 松开一个按键
+
+     参数 key 可以使用字符串传入功能键：
+     - 功能键：f1 - f12
+     - 方向键：up, down,left, right, home, end, pageup, pagedown
+     - 编辑键：backspace, delete, insert, enter, tab, escape, space
+     - 控制键：control, alt, shift, command
+     @param key 指定按键，单字符直接传入，功能键传入名称
+     @param modifier 指定控制键，可以为：control, alt, shift, command
+     */
+    static keyUp(String key, String modifier = "");
+
+    /*! @brief 松开一个按键
+
+     参数 key 可以使用字符串传入功能键：
+     - 功能键：f1 - f12
+     - 方向键：up, down,left, right, home, end, pageup, pagedown
+     - 编辑键：backspace, delete, insert, enter, tab, escape, space
+     - 控制键：control, alt, shift, command
+     @param key 指定按键，单字符直接传入，功能键传入名称
+     @param modifier 指定控制键数组，可以为：control, alt, shift, command
+     */
+    static keyUp(String key, Array modifier);
+
+    /*! @brief 点击并松开一个按键
+
+     参数 key 可以使用字符串传入功能键：
+     - 功能键：f1 - f12
+     - 方向键：up, down,left, right, home, end, pageup, pagedown
+     - 编辑键：backspace, delete, insert, enter, tab, escape, space
+     - 控制键：control, alt, shift, command
+     @param key 指定按键，单字符直接传入，功能键传入名称
+     @param modifier 指定控制键，可以为：control, alt, shift, command
+     */
+    static keyTap(String key, String modifier = "");
+
+    /*! @brief 点击并松开一个按键
+
+     参数 key 可以使用字符串传入功能键：
+     - 功能键：f1 - f12
+     - 方向键：up, down,left, right, home, end, pageup, pagedown
+     - 编辑键：backspace, delete, insert, enter, tab, escape, space
+     - 控制键：control, alt, shift, command
+     @param key 指定按键，单字符直接传入，功能键传入名称
+     @param modifier 指定控制键数组，可以为：control, alt, shift, command
+     */
+    static keyTap(String key, Array modifier);
+
+    /*! @brief 输入一个字符串
+     @param text 指定输入的字符串
+     */
+    static typeString(String text);
+
+    /*! @brief 移动鼠标到指定的位置
+     @param x 指定 x 坐标
+     @param y 指定 y 坐标
+     */
+    static moveMouse(Integer x, Integer y);
+
+    /*! @brief 按下一个鼠标键
+     @param button 指定鼠标键名称，允许值为: left, right, moddle
+     */
+    static mouseUp(String button);
+
+    /*! @brief 放开一个鼠标键
+     @param button 指定鼠标键名称，允许值为: left, right, moddle
+     */
+    static mouseDown(String button);
+
+    /*! @brief 点击一个鼠标键
+     @param button 指定鼠标键名称，允许值为: left, right, moddle
+     @param dbclick 指定是否双击，缺省为 false
+     */
+    static clickMouse(String button, Boolean dbclick = false);
+
+    /*! @brief 从控制台读取用户输入
+     @param msg 提示信息
+     @return 返回用户输入的信息
+     */
+    static String readLine(String msg = "") async;
+
+    /*! @brief 从控制台读取用户输入的密码
+     @param msg 提示信息
+     @return 返回用户输入的密码
+     */
+    static String getpass(String msg = "") async;
+};

@@ -1,0 +1,12 @@
+{
+  "name": "install_from_pkgjson",
+  "version": "1.0.0",
+  "description": "",
+  "repository": "",
+  "keywords": "",
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@fibjs/rmdirr": "^2.0.0"
+  }
+}

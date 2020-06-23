@@ -1,0 +1,13 @@
+/out
+/bin
+
+/deps/fxjs/out/**/*
+/deps/fxjs/bin/**/*
+
+/temp
+/docs
+*.sdf
+*.suo
+node_modules
+
+.vscode

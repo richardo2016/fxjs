@@ -1,0 +1,17 @@
+/*! @brief url URL parse and format module */
+module url
+{
+    /*! @brief convert UrlObject to string
+     @param args UrlObject, keys supported are: protocol, slashes, username, password, hostname, port, pathname, query, hash
+     @return url string that has been construct
+     */
+    static String format(Object args);
+
+    /*! @brief parse an url to UrlObject
+     @param url literal string to be parsed
+     @param parseQueryString figure out whether to resolve query
+     @param slashesDenoteHost  If true, the first token after the literal string // and preceding the next / will be interpreted as the host. For instance, given //foo/bar, the result would be {host: 'foo', pathname: '/bar'} rather than {pathname: '//foo/bar'}. Defaults to false.
+     @return object containing data that has been resolved.
+     */
+    static UrlObject parse(String url, Boolean parseQueryString = false, Boolean slashesDenoteHost = false);
+};
